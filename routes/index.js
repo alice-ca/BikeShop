@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 
-const stripe = require('stripe')('sk_test_dR33tXRXN7n4cCfrkxEZKBis00ginBDyGz');
+const stripe = require('stripe')('sk_test_51HQ84jAXaqH2oTbzs6WzzYrmyFALxjsUc5LMZ9qUO5U0xbIrLCQ1IlcDw8HszRZZGLQCkmLkPhXX6U85gAbTlps000GwYlnt4c');
 
 var dataBike = [
   {name:"BIK045", url:"/images/bike-1.jpg", price:679},
@@ -23,7 +23,7 @@ router.get('/', function(req, res, next) {
   res.render('index', {dataBike:dataBike});
 });
 
-router.get('/shop', async function(req, res, next) {
+router.get('/shop', function(req, res, next) {
 
   var alreadyExist = false;
 
@@ -43,108 +43,57 @@ router.get('/shop', async function(req, res, next) {
     })
   }
 
-  var stripeCard = [];
 
-  for(var i=0;i<req.session.dataCardBike.length;i++){
-    stripeCard.push({
-      name: req.session.dataCardBike[i].name,
-      amount: req.session.dataCardBike[i].price * 100,
-      currency: 'eur',
-      quantity: req.session.dataCardBike[i].quantity,
-    })
-  }
-
-
-  var sessionStripeID;
-
-  if(stripeCard.length>0){
-    var session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: stripeCard,
-      success_url: 'http://127.0.0.1:3000/success?session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: 'http://127.0.0.1:3000/',
-    });
-
-    sessionStripeID = session.id;
-  
-  }
-  
-  
-
-  res.render('shop', {dataCardBike:req.session.dataCardBike, sessionStripeID});
+  res.render('shop', {dataCardBike:req.session.dataCardBike});
 });
 
-router.get('/delete-shop', async function(req, res, next){
+router.get('/delete-shop', function(req, res, next){
   
   req.session.dataCardBike.splice(req.query.position,1)
 
-  var stripeCard = [];
-
-  for(var i=0;i<req.session.dataCardBike.length;i++){
-    stripeCard.push({
-      name: req.session.dataCardBike[i].name,
-      amount: req.session.dataCardBike[i].price * 100,
-      currency: 'eur',
-      quantity: req.session.dataCardBike[i].quantity,
-    })
-  }
-
-
-  var sessionStripeID;
-
-  if(stripeCard.length>0){
-    var session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: stripeCard,
-      success_url: 'http://127.0.0.1:3000/success?session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: 'http://127.0.0.1:3000/',
-    });
-
-    sessionStripeID = session.id;
-  
-  }
-
-  res.render('shop',{dataCardBike:req.session.dataCardBike, sessionStripeID})
+  res.render('shop',{dataCardBike:req.session.dataCardBike})
 })
 
-router.post('/update-shop', async function(req, res, next){
+router.post('/update-shop', function(req, res, next){
   
   var position = req.body.position;
   var newQuantity = req.body.quantity;
 
   req.session.dataCardBike[position].quantity = newQuantity;
 
-  var stripeCard = [];
-
-  for(var i=0;i<req.session.dataCardBike.length;i++){
-    stripeCard.push({
-      name: req.session.dataCardBike[i].name,
-      amount: req.session.dataCardBike[i].price * 100,
-      currency: 'eur',
-      quantity: req.session.dataCardBike[i].quantity,
-    })
-  }
-
-
-  var sessionStripeID;
-
-  if(stripeCard.length>0){
-    var session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: stripeCard,
-      success_url: 'http://127.0.0.1:3000/success?session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: 'http://127.0.0.1:3000/',
-    });
-
-    sessionStripeID = session.id;
-  
-  }
-
-  res.render('shop',{dataCardBike:req.session.dataCardBike, sessionStripeID})
+  res.render('shop',{dataCardBike:req.session.dataCardBike})
 })
 
-router.get('/success', function(req, res, next){
-  res.render('confirm');
+router.post('/create-checkout-session', async (req, res) => {
+  
+  var stripeItems = [];
+
+  for(var i=0;i<req.session.dataCardBike.length;i++){
+    stripeItems.push({
+      price_data: {
+        currency: 'eur',
+        product_data: {
+          name: req.session.dataCardBike[i].name,
+        },
+        unit_amount: req.session.dataCardBike[i].price * 100,
+      },
+      quantity: req.session.dataCardBike[i].quantity,
+    });
+  }
+
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    line_items: stripeItems,
+    mode: "payment",
+    success_url: "http://localhost:3000/confirm",
+    cancel_url: "http://localhost:3000/",
+  });
+
+  res.json({ id: session.id });
+});
+
+router.get('/confirm', function(req, res, next){
+  res.render('confirm')
 })
 
 module.exports = router;
