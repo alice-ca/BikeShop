@@ -1,9 +1,9 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
 
-const stripe = require('stripe')('sk_test_51HQ84jAXaqH2oTbzs6WzzYrmyFALxjsUc5LMZ9qUO5U0xbIrLCQ1IlcDw8HszRZZGLQCkmLkPhXX6U85gAbTlps000GwYlnt4c');
+const stripe = require('stripe')('sk_test_51JnIhKBItH9w3hQNLBWjY1hXEya0mhpl2CBcGTpnOHCBMW3S0d2yb662UhQKhqVUQ9AknHc80JgqLq9KWVx8WXjy00XaXZXaZU');
 
-var dataBike = [
+const dataBike = [
   { name: "BIK045", url: "/images/bike-1.jpg", price: 679 },
   { name: "ZOOK07", url: "/images/bike-2.jpg", price: 999 },
   { name: "TITANS", url: "/images/bike-3.jpg", price: 799 },
@@ -12,8 +12,7 @@ var dataBike = [
   { name: "LIK099", url: "/images/bike-6.jpg", price: 869 },
 ]
 
-
-/* GET home page. */
+//HOME PAGE
 router.get('/', function (req, res, next) {
 
   if (req.session.dataCardBike == undefined) {
@@ -23,21 +22,23 @@ router.get('/', function (req, res, next) {
   res.render('index', { dataBike: dataBike });
 });
 
+//SHOP
 router.get('/shop', function (req, res, next) {
 
   if (req.session.dataCardBike == undefined) {
     req.session.dataCardBike = [];
   }
 
-  var alreadyExist = false;
-  for (var i = 0; i < req.session.dataCardBike.length; i++) {
+  let alreadyExist = false;
+
+  for (let i = 0; i < req.session.dataCardBike.length; i++) {
     if (req.session.dataCardBike[i].name == req.query.bikeNameFromFront) {
       req.session.dataCardBike[i].quantity = Number(req.session.dataCardBike[i].quantity) + 1;
       alreadyExist = true;
     }
   }
 
-  if(alreadyExist == false){
+  if (alreadyExist == false) {
     req.session.dataCardBike.push({
       name: req.query.bikeNameFromFront,
       url: req.query.bikeImageFromFront,
@@ -49,6 +50,7 @@ router.get('/shop', function (req, res, next) {
   res.render('shop', { dataCardBike: req.session.dataCardBike });
 });
 
+//DELETE
 router.get('/delete-shop', function (req, res, next) {
 
   if (req.session.dataCardBike == undefined) {
@@ -60,29 +62,31 @@ router.get('/delete-shop', function (req, res, next) {
   res.render('shop', { dataCardBike: req.session.dataCardBike })
 })
 
+//UPDATE
 router.post('/update-shop', function (req, res, next) {
 
   if (req.session.dataCardBike == undefined) {
     req.session.dataCardBike = [];
   }
 
-  var position = req.body.position;
-  var newQuantity = req.body.quantity;
+  let position = req.body.position;
+  let newQuantity = req.body.quantity;
 
   req.session.dataCardBike[position].quantity = newQuantity;
 
   res.render('shop', { dataCardBike: req.session.dataCardBike })
 })
 
+//CHECKOUT
 router.post('/create-checkout-session', async (req, res) => {
 
   if (req.session.dataCardBike == undefined) {
     req.session.dataCardBike = [];
   }
 
-  var stripeItems = [];
+  let stripeItems = [];
 
-  for (var i = 0; i < req.session.dataCardBike.length; i++) {
+  for (let i = 0; i < req.session.dataCardBike.length; i++) {
     stripeItems.push({
       price_data: {
         currency: 'eur',

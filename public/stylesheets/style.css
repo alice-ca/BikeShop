@@ -18,7 +18,6 @@ body{
 .navbar{
     padding:0px ;
     color: #FFFFFF;
-    
 }
 
 .navbar:hover{
@@ -70,5 +69,8 @@ body{
     color: crimson;
 }
 
+.card {
+    margin:6px;
+}
 
 
